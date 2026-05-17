@@ -1,262 +1,171 @@
-# DuoPilot Campus
+# CampusGo — Campus Services Super App
 
-A university service platform for **UNIMAS & UiTM Samarahan** with two core systems:
+A modern, mobile-first campus services super app built for university students (UNIMAS / UiTM style audience). Book storage, request runners, and submit print jobs — all from your phone.
 
-1. **Duo Pilot Transport System** — every ride/delivery ships with a *pilot* + *co-pilot* for safety.
-2. **Storage System** — daily-priced student storage for luggage, bags, and odd items.
+## Features
 
-Built with **React (Vite) + Tailwind**, **Node.js (Express)**, **PostgreSQL**, and **JWT** authentication. Optional **Google Calendar** sync with smart reminders.
+### Student App
+- **Storage Service** — Semester break storage with daily rate pricing (S/M/L categories)
+- **Runner Service** — Food, parcel, grocery, and custom errands
+- **Printing Service** — B&W and color printing with pickup/delivery
+- **Order Tracking** — Real-time order status updates via Firebase
+- **Profile** — User info, order history, stats
 
----
+### Admin Dashboard
+- Student database with search
+- Order management (update status across all services)
+- Revenue analytics with breakdowns
+- Real-time data from Firestore
 
-## ✦ Features
+## Tech Stack
 
-### Duo Pilot Rides
-- Pickup → drop-off with optional **multi-stop**.
-- **Zone-based pricing** (A/B/C) — admin editable.
-- **Surcharges**: late-night, multi-stop, urgent, public holiday, rain (admin toggle).
-- Auto-assigned pilot + co-pilot, with admin override.
-- Status flow: `pending → accepted → in_progress → completed` (or `cancelled`).
-- Calendar event with **30-minute reminder**.
+| Layer       | Technology              |
+|-------------|-------------------------|
+| Frontend    | Next.js 14 + React 18   |
+| Styling     | Tailwind CSS            |
+| Auth        | Firebase Authentication |
+| Database    | Cloud Firestore         |
+| Storage     | Firebase Storage        |
+| Hosting     | Vercel                  |
 
-### Storage
-- Catalogue: **luggage / storage bags / individual items**.
-- Cart with quantity + start/end date pickers.
-- **Daily price formula** (per spec):
-  ```
-  daily_price = ROUND((base_price + 1) / 7, 2)
-  total       = daily_price × number_of_days × quantity
-  minimum     = RM 5
-  ```
-- Live receipt re-validated server-side.
-- Calendar events for **start** and **end**, with reminders **3 days** + **1 day** before end.
-- **Upsell**: after booking storage, offer to book a DuoPilot pickup automatically.
+## Design System
 
-### Dashboard
-- Student: book ride / book storage / active orders / upcoming events.
-- Admin: manage all bookings, assign crew, edit zone prices, toggle surcharges.
+- **Primary:** `#7C4DFF` (Purple)
+- **Secondary:** `#F5F3FF`
+- **Typography:** Poppins (headings) + Inter (body)
+- **Style:** Rounded cards, soft shadows, mobile-first
 
----
-
-## ✦ Tech stack
-
-| Layer    | Choice                            |
-| -------- | --------------------------------- |
-| Frontend | React 18 + Vite + Tailwind CSS    |
-| Backend  | Node.js + Express                 |
-| DB       | PostgreSQL 12+                    |
-| Auth     | JWT (email + password, bcrypt)    |
-| Calendar | `googleapis` (optional)           |
-
----
-
-## ✦ Folder structure
-
-```
-duopilot-campus/
-├── client/                  # React (Vite) app
-│   ├── index.html
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   └── src/
-│       ├── main.jsx          App.jsx          index.css
-│       ├── api/axios.js
-│       ├── context/AuthContext.jsx
-│       ├── components/       (Navbar, Footer, ProtectedRoute, StatusBadge)
-│       └── pages/            (Landing, Login, Register, Dashboard,
-│                              BookDuoPilot, BookStorage, MyOrders, Admin)
-├── server/                  # Express API
-│   ├── index.js
-│   ├── seed-admin.js
-│   ├── .env.example
-│   ├── config/               (db.js, env.js)
-│   ├── modules/
-│   │   ├── auth/             (routes, controller, middleware)
-│   │   ├── duopilot/         (routes, controller, service)
-│   │   └── storage/          (routes, controller, service)
-│   └── utils/                (pricing.js, googleCalendar.js)
-└── database/
-    └── schema.sql
-```
-
----
-
-## ✦ Quick start
-
-### 0. Prerequisites
-- Node.js **18+**
-- PostgreSQL **12+** running locally
-- `psql` CLI on your `$PATH`
+## Quick Start
 
 ### 1. Clone & install
+
 ```bash
-# from project root
-cd server  && npm install
-cd ../client && npm install
+git clone https://github.com/anisatikah/campusgo-duo.git
+cd campusgo-duo
+npm install
 ```
 
-### 2. Create the database & schema
-```bash
-# create DB (one time)
-createdb duopilot_campus
+### 2. Set up Firebase
 
-# load schema + seed data
-psql duopilot_campus -f database/schema.sql
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project
+3. Enable **Authentication** → Email/Password provider
+4. Enable **Firestore Database** (start in test mode, then apply security rules)
+5. Enable **Storage**
+6. Go to **Project Settings → Your Apps** → Add a Web App
+7. Copy the Firebase config
+
+### 3. Configure environment variables
+
+```bash
+cp .env.local.example .env.local
 ```
 
-### 3. Configure server env
-```bash
-cd server
-cp .env.example .env
-# edit .env — at minimum set DATABASE_URL and JWT_SECRET
-```
+Edit `.env.local` with your Firebase config:
 
-`.env` example:
 ```env
-PORT=5000
-NODE_ENV=development
-CLIENT_URL=http://localhost:5173
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/duopilot_campus
-JWT_SECRET=replace_me_with_a_long_random_string
-JWT_EXPIRES_IN=7d
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_ADMIN_WHATSAPP=601XXXXXXXXX
 ```
 
-### 4. Seed the admin user
+### 4. Apply Firestore security rules
+
 ```bash
-# from server/
-npm run db:seed-admin
-# → creates  admin@duopilot.local / admin123  (CHANGE THIS!)
-# or pass custom values:
-node seed-admin.js you@unimas.my YourSecret123
+npm install -g firebase-tools
+firebase login
+firebase init firestore
+firebase deploy --only firestore:rules
 ```
 
-### 5. Run it
-Open two terminals.
+Or paste `firestore.rules` manually in Firebase Console → Firestore → Rules.
 
-**Terminal 1 — API:**
-```bash
-cd server
-npm run dev          # nodemon, hot-reload
-# ▸ DuoPilot Campus API ready on http://localhost:5000
-```
+### 5. Run locally
 
-**Terminal 2 — Web:**
 ```bash
-cd client
 npm run dev
-# ➜  Local:   http://localhost:5173/
 ```
 
-Open **http://localhost:5173** in your browser.
-- Sign in as **admin@duopilot.local / admin123** to access the admin console.
-- Or create a new student account from `/register`.
+Open [http://localhost:3000](http://localhost:3000)
 
----
+### 6. Create first admin user
 
-## ✦ Optional — Google Calendar
+1. Register a student account at `/register`
+2. In Firebase Console → Firestore → `users` collection
+3. Find the document for your email → edit `role` field to `admin`
+4. Admin dashboard is at `/admin`
 
-1. Create a project in [Google Cloud Console](https://console.cloud.google.com/), enable **Google Calendar API**.
-2. Create an **OAuth 2.0 Client ID** (Web application).
-3. Add `http://localhost:5000/api/auth/google/callback` to **Authorised redirect URIs**.
-4. Add the credentials to `server/.env`:
-   ```env
-   GOOGLE_CLIENT_ID=...
-   GOOGLE_CLIENT_SECRET=...
-   GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
-   ```
-5. Restart the server. After login, hit `GET /api/auth/google` (returns a consent URL) — visit it once and grant access.
-
-When connected, all subsequent bookings auto-create calendar events with reminders. If credentials are missing, the app silently skips calendar sync — bookings still work fine.
-
----
-
-## ✦ API reference
-
-All `/api/*` paths. JWT in `Authorization: Bearer <token>`.
-
-### Auth
-| Method | Path                          | Body                                                      |
-| ------ | ----------------------------- | --------------------------------------------------------- |
-| POST   | `/api/auth/register`          | `{ name, email, password, phone?, campus? }`              |
-| POST   | `/api/auth/login`             | `{ email, password }`                                     |
-| GET    | `/api/auth/me`                | —                                                         |
-| GET    | `/api/auth/google`            | — (returns OAuth URL)                                     |
-| GET    | `/api/auth/google/callback`   | (OAuth redirect)                                          |
-
-### DuoPilot
-| Method | Path                                  | Notes                                  |
-| ------ | ------------------------------------- | -------------------------------------- |
-| GET    | `/api/duopilot/config`                | zones + surcharges                     |
-| GET    | `/api/duopilot/crew`                  | available pilots/copilots              |
-| POST   | `/api/duopilot/book`                  | create booking                         |
-| GET    | `/api/duopilot/orders`                | own (or all, if admin)                 |
-| PATCH  | `/api/duopilot/status/:id`            | update status (cancel; admin = any)    |
-| PATCH  | `/api/duopilot/assign/:id`            | admin: assign crew                     |
-| PATCH  | `/api/duopilot/surcharges/:type`      | admin: toggle surcharge                |
-| PATCH  | `/api/duopilot/zones/:name`           | admin: edit base price                 |
-
-### Storage
-| Method | Path                          | Notes                                |
-| ------ | ----------------------------- | ------------------------------------ |
-| GET    | `/api/storage/items`          | catalogue with daily prices          |
-| POST   | `/api/storage/quote`          | preview total without saving         |
-| POST   | `/api/storage/book`           | create order                         |
-| GET    | `/api/storage/orders`         | own (or all, if admin)               |
-| PATCH  | `/api/storage/status/:id`     | update status                        |
-| PATCH  | `/api/storage/pickup/:id`     | link a DuoPilot order as pickup      |
-
----
-
-## ✦ Pricing reference
-
-### Storage
-```
-base_price (RM, weekly reference) → daily_price = ROUND((base + 1) / 7, 2)
-```
-
-| Item                       | Base | Daily |
-| -------------------------- | ---- | ----- |
-| Cabin Luggage (small)      | 8.00 | 1.29  |
-| Check-in Luggage (medium)  |12.00 | 1.86  |
-| Check-in Luggage (large)   |16.00 | 2.43  |
-| Storage Bag (M)            | 6.00 | 1.00  |
-| Storage Bag (L)            | 9.00 | 1.43  |
-| Box / Carton               | 5.00 | 0.86  |
-| Mattress / Bedding         |10.00 | 1.57  |
-| Electronics Box            | 7.00 | 1.14  |
-
-### DuoPilot
-| Zone | Label                       | Base   |
-| ---- | --------------------------- | ------ |
-| A    | On Campus                   | RM 4   |
-| B    | Nearby (Kota Samarahan)     | RM 7   |
-| C    | Town (Kuching / Tabuan)     | RM 14  |
-
-| Surcharge        | Amount  | Default |
-| ---------------- | ------- | ------- |
-| Late night (≥11PM)| RM 3    | active  |
-| Multi-stop       | RM 2.50 | active  |
-| Urgent           | RM 5    | active  |
-| Public holiday   | RM 3    | active  |
-| Rain             | RM 2    | off (admin toggle) |
-
----
-
-## ✦ Build for production
+## Deploy to Vercel
 
 ```bash
-# client → static assets in client/dist
-cd client && npm run build
-
-# serve client/dist behind any static host (nginx/vercel/etc.)
-# point server to that origin via CLIENT_URL in server/.env
-
-cd ../server && NODE_ENV=production npm start
+npm install -g vercel
+vercel
 ```
 
----
+Or connect your GitHub repo to [Vercel](https://vercel.com) and add environment variables in the Vercel dashboard.
 
-## ✦ License
+## Project Structure
 
-For internal student-project use at UNIMAS / UiTM Samarahan. Adapt freely.
+```
+src/
+├── app/
+│   ├── (auth)/           # Login & Register pages
+│   │   ├── login/
+│   │   └── register/
+│   ├── (main)/           # Student app (protected)
+│   │   ├── dashboard/
+│   │   ├── services/
+│   │   │   ├── storage/
+│   │   │   ├── runner/
+│   │   │   └── printing/
+│   │   ├── orders/
+│   │   ├── chat/
+│   │   └── profile/
+│   ├── admin/            # Admin dashboard (role-protected)
+│   │   ├── users/
+│   │   ├── orders/
+│   │   └── analytics/
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── ui/               # Button, Card, Input, Badge, Select, Textarea
+│   ├── layout/           # BottomNav, TopBar, MainLayout
+│   └── dashboard/        # StatCard
+├── context/
+│   └── AuthContext.tsx   # Firebase Auth + user profile
+├── hooks/
+│   └── useOrders.ts      # Firestore real-time order hooks
+├── lib/
+│   ├── firebase.ts       # Firebase app init
+│   └── utils.ts          # Pricing, formatting, helpers
+└── types/
+    └── index.ts          # TypeScript types + storage rates
+```
+
+## Storage Pricing
+
+| Size  | 1 item | 2 items | 3 items | Max qty |
+|-------|--------|---------|---------|---------|
+| S     | RM0.45 | RM0.78  | RM1.04  | 10      |
+| M     | RM0.71 | RM1.17  | RM1.56  | 6       |
+| L     | RM0.97 | RM1.69  | RM2.34  | 4       |
+
+Formula: `total = daily_rate × total_days`
+
+## Firestore Collections
+
+| Collection       | Description                  |
+|------------------|------------------------------|
+| `users`          | Student profiles             |
+| `storage_orders` | Semester break storage       |
+| `runner_orders`  | Food/parcel/grocery runners  |
+| `printing_orders`| Print jobs                   |
+| `notifications`  | Push notifications           |
+
+## License
+
+For internal student-project use at UNIMAS / UiTM. Adapt freely.
